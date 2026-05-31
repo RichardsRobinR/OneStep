@@ -19,7 +19,7 @@ builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowFrontend", policy =>
-		policy.WithOrigins("http://localhost:5173")
+		policy.WithOrigins(["http://localhost:5173", "https://one-step-1yyv7tzkx-richardsrobinrs-projects.vercel.app"])
 			.AllowAnyMethod()
 			.AllowAnyHeader()
 			.AllowCredentials());
