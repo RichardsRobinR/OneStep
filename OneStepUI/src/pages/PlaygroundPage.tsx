@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import apiClient from '../services/apiClient'
 import { connection , signalRService } from '../services/HubConnectionBuilder'
@@ -13,7 +13,7 @@ interface Player {
 }
 
 export default function PlaygroundPage() {
-  const navigate = useNavigate()
+//   const navigate = useNavigate()
   const { session } = useAuth()
 const [players, setPlayers] = useState<Player[]>([]);
 const [isJoined, setIsJoined] = useState(false);
