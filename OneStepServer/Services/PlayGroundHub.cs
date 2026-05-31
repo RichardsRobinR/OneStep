@@ -35,10 +35,10 @@ public class PlayGroundHub : Hub
         };
 
         // Populate default game collectible catalog
-        room.Items.Add(new AuctionItemState { Id = "1", Name = "Unlimited Coffee ☕", Category = "Productivity", Value = 500000 });
-        room.Items.Add(new AuctionItemState { Id = "2", Name = "Extra Vacation Day 🏖", Category = "Lifestyle", Value = 300000 });
-        room.Items.Add(new AuctionItemState { Id = "3", Name = "AI Assistant 🤖", Category = "Tech", Value = 800000 });
-        room.Items.Add(new AuctionItemState { Id = "4", Name = "Meeting Pass 🎫", Category = "Utility", Value = 200000 });
+        room.Items.Add(new AuctionItemState { Id = "1", Name = "Unlimited Coffee ☕", Icon = "☕", Category = "Productivity", Value = 500000 });
+        room.Items.Add(new AuctionItemState { Id = "2", Name = "Extra Vacation Day 🏖", Icon = "🏖", Category = "Lifestyle", Value = 300000 });
+        room.Items.Add(new AuctionItemState { Id = "3", Name = "AI Assistant 🤖", Icon = "🤖", Category = "Tech", Value = 800000 });
+        room.Items.Add(new AuctionItemState { Id = "4", Name = "Meeting Pass 🎫", Icon = "🎫", Category = "Utility", Value = 200000 });
 
         Rooms.TryAdd(roomId, room);
 
@@ -106,6 +106,7 @@ public class PlayGroundHub : Hub
                 throw new HubException("Only host can pause");
             }
             room.TimerPaused = true;
+            await Clients.Group(roomId).SendAsync("AuctionPaused");
         }
     }
 
@@ -118,6 +119,7 @@ public class PlayGroundHub : Hub
                 throw new HubException("Only host can resume");
             }
             room.TimerPaused = false;
+            await Clients.Group(roomId).SendAsync("AuctionResumed");
         }
     }
 
@@ -167,6 +169,18 @@ public class PlayGroundHub : Hub
         }
     }
 
+    public async Task TriggerEndGame(string roomId)
+    {
+        if (Rooms.TryGetValue(roomId, out var room))
+        {
+            if (room.HostConnectionId != Context.ConnectionId)
+            {
+                throw new HubException("Only host can trigger end game results");
+            }
+            await Clients.Group(roomId).SendAsync("EndGameTriggered");
+        }
+    }
+
     public async Task PlaceBid(string roomId, int amount)
     {
         if (Rooms.TryGetValue(roomId, out var room))
@@ -200,6 +214,7 @@ public class PlayGroundHub : Hub
             {
                 Id = Guid.NewGuid().ToString("N").Substring(0, 8),
                 Name = name,
+                Icon = GetCategoryIcon(category),
                 Category = category,
                 Value = value,
                 IsSold = false
@@ -207,6 +222,16 @@ public class PlayGroundHub : Hub
             await Clients.Group(roomId).SendAsync("ItemsUpdated", room.Items);
         }
     }
+
+    private static string GetCategoryIcon(string category) => category switch
+    {
+        "Productivity" => "☕",
+        "Lifestyle" => "🏖",
+        "Tech" => "🤖",
+        "Utility" => "🎫",
+        "Luxury" => "💎",
+        _ => "📦"
+    };
 
     public async Task RemoveItem(string roomId, string itemId)
     {

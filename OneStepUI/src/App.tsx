@@ -1,126 +1,139 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import './App.css'
-import { signInWithEmail } from './auth'
-import { useAuth } from './context/AuthContext'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './App.css';
+import { signInWithEmail } from './auth';
+import { useAuth } from './context/AuthContext';
 
 function App() {
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const { session, loading: authLoading } = useAuth()
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { session, loading: authLoading } = useAuth();
 
-  const handleSignIn = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    setError(null);
+    setLoading(true);
 
     try {
-      await signInWithEmail(email)
-      navigate('/otp', { state: { email } })
+      await signInWithEmail(email);
+      // Pass email along in routing state so OTP page has context
+      navigate('/otp', { state: { email } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed')
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
-  }
+  };
 
-  const handleLogout = async () => {
-    await signInWithEmail('')
-  }
+  const handleDemoAccess = () => {
+    // Navigate straight to playground as a mock player or mock host
+    navigate('/playground', { state: { isDemo: true, email: 'demo.player@auctionwar.com' } });
+  };
 
-  // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-        <h1>OneStepUI</h1>
-        <p>Loading...</p>
+      <div className="loading-box">
+        <div className="loading-spinner" />
+        <p className="loading-text">Initializing Game Client...</p>
       </div>
-    )
+    );
   }
 
+  // If user has a real session, show a welcoming dashboard to launch
   if (session) {
-    console.log('User session:', session) // Debugging line to check session structure
     return (
-      <>
-        <h1>OneStepUI</h1>
-        <section style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-          <h2>Welcome!</h2>
-          <p>Email: {session.user.email}</p>
-          <p>User ID: {session.user.id}</p>
+      <div className="view-centered-wrapper">
+        <div className="glass-card auth-card">
+          <div className="auth-logo-large">👑</div>
+          <h1 className="game-title">Welcome Back</h1>
+          <p className="game-subtitle">Authenticated as {session.user.email}</p>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '2rem' }}>
+          <div className="auth-form">
             <button
               onClick={() => navigate('/playground')}
-              style={{ 
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                flex: 1
-              }}
+              className="btn btn-primary"
             >
-              Go to Playground
+              Enter Game Lobby
             </button>
             <button
-              onClick={handleLogout}
-              style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                flex: 1
+              onClick={async () => {
+                await signInWithEmail('');
+                navigate('/');
               }}
+              className="btn btn-secondary"
             >
-              Logout
+              Logout / Disconnect
             </button>
           </div>
-        </section>
-      </>
-    )
+        </div>
+      </div>
+    );
   }
 
   return (
-    <>
-      <h1>OneStepUI</h1>
-      <section style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-        <h2>Sign In</h2>
-        <form onSubmit={handleSignIn}>
-          <div>
-            <label htmlFor="email">Email:</label>
+    <div className="view-centered-wrapper">
+      <div className="glass-card auth-card">
+        <div className="auction-item-icon auth-logo-large">⚔️</div>
+        <h1 className="game-title">Live Auction War</h1>
+        <p className="game-subtitle">High-Stakes Real-Time Bidding Game</p>
+
+        <form onSubmit={handleSignIn} className="auth-form">
+          <div className="auth-form-field">
+            <label htmlFor="email" className="auth-form-label">
+              Sign in with Email
+            </label>
             <input
               id="email"
               type="email"
-              placeholder="your@email.com"
+              placeholder="your.email@address.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
+              className="form-input"
               required
+              disabled={loading}
             />
           </div>
 
-          {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
+          {error && (
+            <div className="auth-error-alert">
+              ⚠️ {error}
+            </div>
+          )}
 
           <button
             type="submit"
+            className="btn btn-primary"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              marginTop: '1rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
           >
-            {loading ? 'Sending...' : 'Send OTP'}
+            {loading ? 'Transmitting OTP...' : 'Send OTP Code'}
           </button>
         </form>
-      </section>
-    </>
-  )
+
+        <div className="auth-divider-row">
+          <span className="auth-divider-line"></span>
+          <span className="auth-divider-text">or</span>
+          <span className="auth-divider-line"></span>
+        </div>
+
+        <button
+          onClick={handleDemoAccess}
+          className="btn btn-cyan"
+        >
+          🎮 Enter Demo/Sandbox Mode
+        </button>
+
+        <p className="auth-footer-note">
+          Review the user interfaces, winner modal, sounds, and leaderboard.
+        </p>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

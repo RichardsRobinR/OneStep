@@ -1,86 +1,117 @@
-import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { verifyOtp } from '../auth'
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { verifyOtp } from '../auth';
 
 interface LocationState {
-  email?: string
+  email?: string;
 }
 
 export default function OTPPage() {
-  const [otp, setOtp] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const location = useLocation()
-  const email = (location.state as LocationState)?.email || ''
-
-  if (!email) {
-    return (
-      <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-        <p style={{ color: 'red' }}>No email provided. Please sign in first.</p>
-      </div>
-    )
-  }
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const email = (location.state as LocationState)?.email || '';
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
-    console.log('handleVerifyOtp called') // Debug: check if form submit works
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    if (!otp.trim()) {
+      setError('Please enter the verification code');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
 
     try {
-      console.log('Calling verifyOtp with email:', email, 'otp:', otp) // Debug
-      const result = await verifyOtp(email, otp)
+      // Allow '123456' as a magic bypass code for testing UI
+      if (otp === '123456') {
+        console.log('Using magic bypass code for UI demo');
+        navigate('/playground', { state: { email, bypass: true } });
+        return;
+      }
 
-      console.log('OTP verification result:', result) // Debugging line to check the result structure
-
+      const result = await verifyOtp(email, otp);
       if (result.error) {
-        setError(result.error)
+        setError(result.error);
       } else {
-        // OTP verified successfully, redirect to home
-        console.log('OTP verified, redirecting to home') // Debug
-        navigate('/')
+        navigate('/playground');
       }
     } catch (err) {
-      console.error('OTP verification error:', err) // Debug
-      setError(err instanceof Error ? err.message : 'Verification failed')
+      setError(err instanceof Error ? err.message : 'Verification failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-      <h2>Enter OTP</h2>
-      <p>We sent a 6-digit code to {email}</p>
+    <div className="view-centered-wrapper">
+      <div className="glass-card auth-card">
+        <h1 className="game-title">Verify Identity</h1>
+        <p className="game-subtitle">Live Auction War</p>
 
-      <form onSubmit={handleVerifyOtp}>
-        <div>
-          <label htmlFor="otp">OTP Code:</label>
-          <input
-            id="otp"
-            type="text"
-            placeholder="000000"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
-          />
+        {email ? (
+          <p className="otp-identity-preview">
+            We've transmitted a verification OTP code to <br />
+            <strong className="otp-email-highlight">{email}</strong>
+          </p>
+        ) : (
+          <p className="otp-error-unspecified">
+            No email address was identified.
+          </p>
+        )}
+
+        <form onSubmit={handleVerifyOtp} className="auth-form">
+          <div className="auth-form-field">
+            <label htmlFor="otp" className="auth-form-label">
+              One-Time Password
+            </label>
+            <input
+              id="otp"
+              type="text"
+              placeholder="000000"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="form-input otp-input-field"
+              maxLength={8}
+              disabled={loading}
+              autoFocus
+            />
+            <span className="otp-tip-text">
+              Tip: Enter <strong className="otp-tip-highlight">123456</strong> to bypass and test the UI
+            </span>
+          </div>
+
+          {error && (
+            <div className="auth-error-alert">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading || !email}
+          >
+            {loading ? (
+              <>
+                <span className="otp-loader-dot" />
+                Verifying...
+              </>
+            ) : 'Verify OTP'}
+          </button>
+        </form>
+
+        <div className="otp-action-divider">
+          <button
+            onClick={() => navigate('/')}
+            className="btn btn-secondary"
+          >
+            Back to Sign In
+          </button>
         </div>
-
-        {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
-
-        <button
-          type="submit"
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            marginTop: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {loading ? 'Verifying...' : 'Verify OTP'}
-        </button>
-      </form>
+      </div>
     </div>
-  )
+  );
 }
