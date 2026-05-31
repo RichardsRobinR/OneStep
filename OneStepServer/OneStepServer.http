@@ -1,0 +1,6 @@
+@OneStepServer_HostAddress = http://localhost:5276
+
+GET {{OneStepServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
