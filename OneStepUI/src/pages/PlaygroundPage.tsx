@@ -311,12 +311,12 @@ export default function PlaygroundPage() {
         {/* Header Bar */}
         <header className="playground-header">
           <div>
-            <h1 className="playground-header-title">
-              ⚔️ LIVE AUCTION WAR
-            </h1>
-            <p className="playground-header-subtitle">
+            <h2 className="playground-header-title">
+              OneStep
+            </h2>
+            {/* <p className="playground-header-subtitle">
               Real-time workspace collectibles bidding simulation
-            </p>
+            </p> */}
           </div>
           {roomState !== 'none' && (
             <div className="playground-header-controls">
