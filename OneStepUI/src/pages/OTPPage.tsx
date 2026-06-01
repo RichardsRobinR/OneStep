@@ -25,12 +25,6 @@ export default function OTPPage() {
     setLoading(true);
 
     try {
-      // Allow '123456' as a magic bypass code for testing UI
-      if (otp === '123456') {
-        console.log('Using magic bypass code for UI demo');
-        navigate('/playground', { state: { email, bypass: true } });
-        return;
-      }
 
       const result = await verifyOtp(email, otp);
       if (result.error) {
@@ -49,7 +43,7 @@ export default function OTPPage() {
     <div className="view-centered-wrapper">
       <div className="glass-card auth-card">
         <h1 className="game-title">Verify Identity</h1>
-        <p className="game-subtitle">Live Auction War</p>
+        <p className="game-subtitle"></p>
 
         {email ? (
           <p className="otp-identity-preview">
@@ -70,7 +64,7 @@ export default function OTPPage() {
             <input
               id="otp"
               type="text"
-              placeholder="000000"
+              placeholder="00000000"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               className="form-input otp-input-field"
@@ -78,9 +72,6 @@ export default function OTPPage() {
               disabled={loading}
               autoFocus
             />
-            <span className="otp-tip-text">
-              Tip: Enter <strong className="otp-tip-highlight">123456</strong> to bypass and test the UI
-            </span>
           </div>
 
           {error && (

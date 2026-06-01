@@ -278,11 +278,11 @@ public class PlayGroundHub : Hub
                         {
                             currentItem.IsSold = true;
                             currentItem.Winner = room.HighestBidder;
-                            currentItem.WinningBid = room.CurrentBid;
+                            currentItem.WinningBid = string.IsNullOrEmpty(room.HighestBidder) ? 0 : room.CurrentBid;
 
                             RecalculatePlayerStats(room);
 
-                            await hubContext.Clients.Group(roomId).SendAsync("ItemSold", room.HighestBidder, room.CurrentBid, currentItem.Name);
+                            await hubContext.Clients.Group(roomId).SendAsync("ItemSold", room.HighestBidder, currentItem.WinningBid, currentItem.Name);
                             await hubContext.Clients.Group(roomId).SendAsync("PlayersUpdated", room.Players);
                         }
                         break;

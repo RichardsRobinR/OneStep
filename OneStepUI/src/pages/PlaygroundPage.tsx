@@ -110,7 +110,7 @@ export default function PlaygroundPage() {
           setCurrentBid(bidAmount);
           setHighestBidder(bidder);
           sounds.playBid();
-          setActivityFeed((prev) => [`${bidder} placed a bid of $${bidAmount.toLocaleString()}`, ...prev]);
+          setActivityFeed((prev) => [`${bidder} placed a bid of ₹${bidAmount.toLocaleString()}`, ...prev]);
         });
 
         connection.on("TimerTicked", (secondsLeft: number) => {
@@ -123,8 +123,14 @@ export default function PlaygroundPage() {
         connection.on("ItemSold", (winnerName: string, winningAmount: number, itemName: string) => {
           setWinnerInfo({ winner: winnerName, bid: winningAmount, item: itemName });
           setShowWinnerModal(true);
-          setIsConfettiActive(true);
-          sounds.playWinner();
+          
+          if (winnerName) {
+            setIsConfettiActive(true);
+            sounds.playWinner();
+          } else {
+            setIsConfettiActive(false);
+            sounds.playWarning();
+          }
           
           // Update item sold status in catalog
           setItems((prevItems) =>
@@ -490,7 +496,7 @@ export default function PlaygroundPage() {
                               </div>
                               <div className="lobby-item-meta">
                                 <span className="lobby-item-value-text">
-                                  Val: ${item.value.toLocaleString()}
+                                  Val: ₹{item.value.toLocaleString()}
                                 </span>
                                 <button
                                   type="button"
@@ -580,7 +586,7 @@ export default function PlaygroundPage() {
                     <div className="live-bid-summary-grid">
                       <div className="live-bid-display-box">
                         <span className="live-player-wallet-label">Current Bid</span>
-                        <div className="bid-value">${currentBid.toLocaleString()}</div>
+                        <div className="bid-value">₹{currentBid.toLocaleString()}</div>
                       </div>
                       <div className="live-bid-display-box">
                         <span className="live-player-wallet-label">Leading Bidder</span>
@@ -596,7 +602,7 @@ export default function PlaygroundPage() {
                         <div className="live-player-wallet-row">
                           <span className="live-player-wallet-label">Cash Remaining:</span>
                           <span className="live-player-wallet-value">
-                            ${(players.find(p => p.email === session?.user?.email)?.cash ?? startingCash).toLocaleString()}
+                            ₹{(players.find(p => p.email === session?.user?.email)?.cash ?? startingCash).toLocaleString()}
                           </span>
                         </div>
 
@@ -660,7 +666,7 @@ export default function PlaygroundPage() {
                         <div className="live-inventory-card">
                           <span className="live-inventory-card-label">Cash Remaining</span>
                           <div className="live-inventory-card-value">
-                            ${(players.find(p => p.email === session?.user?.email)?.cash ?? startingCash).toLocaleString()}
+                            ₹{(players.find(p => p.email === session?.user?.email)?.cash ?? startingCash).toLocaleString()}
                           </div>
                         </div>
                         <div className="live-inventory-card">
@@ -701,7 +707,6 @@ export default function PlaygroundPage() {
                         <th>Player</th>
                         <th>Cash Remaining</th>
                         <th>Portfolio Value</th>
-                        <th>Bonus Points</th>
                         <th>Total Score</th>
                       </tr>
                     </thead>
@@ -714,10 +719,9 @@ export default function PlaygroundPage() {
                           <tr key={p.connectionId || idx} className={`leaderboard-row ${idx === 0 ? 'gold-rank' : ''}`}>
                             <td className="font-weight-bold">{idx + 1}</td>
                             <td>{p.email.split('@')[0]} {idx === 0 && '👑'}</td>
-                            <td className="font-family-mono">${cashVal.toLocaleString()}</td>
-                            <td className="font-family-mono">${portfolioVal.toLocaleString()}</td>
-                            <td className="font-family-mono">+0</td>
-                            <td className="font-family-mono font-weight-bold">${score.toLocaleString()}</td>
+                            <td className="font-family-mono">₹{cashVal.toLocaleString()}</td>
+                            <td className="font-family-mono">₹{portfolioVal.toLocaleString()}</td>
+                            <td className="font-family-mono font-weight-bold">₹{score.toLocaleString()}</td>
                           </tr>
                         );
                       })}
@@ -755,14 +759,14 @@ export default function PlaygroundPage() {
                       <div className="endgame-stats-row">
                         <span className="endgame-stats-label">Cash Remaining:</span>
                         <span className="endgame-stats-value">
-                          ${(sortedLeaderboard[0]?.cash ?? startingCash).toLocaleString()}
+                          ₹{(sortedLeaderboard[0]?.cash ?? startingCash).toLocaleString()}
                         </span>
                       </div>
                       
                       <div className="endgame-stats-row">
                         <span className="endgame-stats-label">Portfolio Total:</span>
                         <span className="endgame-stats-value text-secondary">
-                          ${(sortedLeaderboard[0]?.portfolioValue ?? 0).toLocaleString()}
+                          ₹{(sortedLeaderboard[0]?.portfolioValue ?? 0).toLocaleString()}
                         </span>
                       </div>
 
@@ -773,7 +777,7 @@ export default function PlaygroundPage() {
                           .map((item) => (
                             <div key={item.id} className="endgame-portfolio-row">
                               <span>{item.name}:</span>
-                              <span>${(item.winningBid || 0).toLocaleString()}</span>
+                              <span>₹{(item.winningBid || 0).toLocaleString()}</span>
                             </div>
                           ))}
                         {items.filter((i) => i.winner === (sortedLeaderboard[0]?.email?.split('@')[0] ?? '') && i.isSold).length === 0 && (
@@ -791,7 +795,7 @@ export default function PlaygroundPage() {
                       <div className="endgame-total-score-row">
                         <span className="endgame-total-score-label">Final Score:</span>
                         <span className="endgame-total-score-val">
-                          ${(sortedLeaderboard[0]?.totalScore ?? 0).toLocaleString()}
+                          ₹{(sortedLeaderboard[0]?.totalScore ?? 0).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -835,24 +839,49 @@ export default function PlaygroundPage() {
       {showWinnerModal && winnerInfo && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-trophy">🏆</div>
-            <div className="modal-title">Winner</div>
-            
-            <div className="modal-details">
-              <div className="modal-detail-value-large">
-                {winnerInfo.winner.split('@')[0]}
-              </div>
+            {winnerInfo.winner ? (
+              <>
+                <div className="modal-trophy">🏆</div>
+                <div className="modal-title">Winner</div>
+                
+                <div className="modal-details">
+                  <div className="modal-detail-value-large">
+                    {winnerInfo.winner.split('@')[0]}
+                  </div>
 
-              <div className="modal-detail-label-margin">Winning Bid</div>
-              <div className="modal-detail-value-mid">
-                ${winnerInfo.bid.toLocaleString()}
-              </div>
+                  <div className="modal-detail-label-margin">Winning Bid</div>
+                  <div className="modal-detail-value-mid">
+                    ₹{winnerInfo.bid.toLocaleString()}
+                  </div>
 
-              <div className="modal-detail-label-margin">Item Won</div>
-              <div className="modal-detail-value-text">
-                {winnerInfo.item}
-              </div>
-            </div>
+                  <div className="modal-detail-label-margin">Item Won</div>
+                  <div className="modal-detail-value-text">
+                    {winnerInfo.item}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="modal-trophy">📦</div>
+                <div className="modal-title">Unsold</div>
+                
+                <div className="modal-details">
+                  <div className="modal-detail-value-large">
+                    No Bids Placed
+                  </div>
+
+                  <div className="modal-detail-label-margin">Collectible Item</div>
+                  <div className="modal-detail-value-text">
+                    {winnerInfo.item}
+                  </div>
+
+                  <div className="modal-detail-label-margin">Status</div>
+                  <div className="modal-detail-value-text">
+                    This item has passed without any active bids from players.
+                  </div>
+                </div>
+              </>
+            )}
 
             <button
               onClick={() => {

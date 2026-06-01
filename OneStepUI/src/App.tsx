@@ -31,10 +31,6 @@ function App() {
     }
   };
 
-  const handleDemoAccess = () => {
-    // Navigate straight to playground as a mock player or mock host
-    navigate('/playground', { state: { isDemo: true, email: 'demo.player@auctionwar.com' } });
-  };
 
   if (authLoading) {
     return (
@@ -80,8 +76,8 @@ function App() {
     <div className="view-centered-wrapper">
       <div className="glass-card auth-card">
         <div className="auction-item-icon auth-logo-large">⚔️</div>
-        <h1 className="game-title">Live Auction War</h1>
-        <p className="game-subtitle">High-Stakes Real-Time Bidding Game</p>
+        <h1 className="game-title">OneStep</h1>
+        {/* <p className="game-subtitle">High-Stakes Real-Time Bidding Game</p> */}
 
         <form onSubmit={handleSignIn} className="auth-form">
           <div className="auth-form-field">
@@ -114,23 +110,6 @@ function App() {
             {loading ? 'Transmitting OTP...' : 'Send OTP Code'}
           </button>
         </form>
-
-        <div className="auth-divider-row">
-          <span className="auth-divider-line"></span>
-          <span className="auth-divider-text">or</span>
-          <span className="auth-divider-line"></span>
-        </div>
-
-        <button
-          onClick={handleDemoAccess}
-          className="btn btn-cyan"
-        >
-          🎮 Enter Demo/Sandbox Mode
-        </button>
-
-        <p className="auth-footer-note">
-          Review the user interfaces, winner modal, sounds, and leaderboard.
-        </p>
       </div>
     </div>
   );
