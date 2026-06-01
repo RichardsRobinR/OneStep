@@ -35,10 +35,10 @@ public class PlayGroundHub : Hub
         };
 
         // Populate default game collectible catalog
-        room.Items.Add(new AuctionItemState { Id = "1", Name = "Unlimited Coffee ☕", Icon = "☕", Category = "Productivity", Value = 500000 });
-        room.Items.Add(new AuctionItemState { Id = "2", Name = "Extra Vacation Day 🏖", Icon = "🏖", Category = "Lifestyle", Value = 300000 });
-        room.Items.Add(new AuctionItemState { Id = "3", Name = "AI Assistant 🤖", Icon = "🤖", Category = "Tech", Value = 800000 });
-        room.Items.Add(new AuctionItemState { Id = "4", Name = "Meeting Pass 🎫", Icon = "🎫", Category = "Utility", Value = 200000 });
+        room.Items.Add(new AuctionItemState { Id = "1", Name = "Unlimited Coffee", Icon = "☕", Category = "Productivity", Value = 500000 });
+        room.Items.Add(new AuctionItemState { Id = "2", Name = "Extra Vacation Day", Icon = "🏖", Category = "Lifestyle", Value = 300000 });
+        room.Items.Add(new AuctionItemState { Id = "3", Name = "AI Assistant", Icon = "🤖", Category = "Tech", Value = 800000 });
+        room.Items.Add(new AuctionItemState { Id = "4", Name = "Meeting Pass", Icon = "🎫", Category = "Utility", Value = 200000 });
 
         Rooms.TryAdd(roomId, room);
 
@@ -70,11 +70,12 @@ public class PlayGroundHub : Hub
             });
         }
 
+        RecalculatePlayerStats(room);
         await Clients.Group(roomId).SendAsync("PlayersUpdated", room.Players);
         await Clients.Group(roomId).SendAsync("ItemsUpdated", room.Items);
     }
 
-    public async Task StartAuction(string roomId, int duration)
+    public async Task StartAuction(string roomId, int duration, int startingCash)
     {
         if (!Rooms.TryGetValue(roomId, out var room))
         {
@@ -86,12 +87,15 @@ public class PlayGroundHub : Hub
             throw new HubException("Only host can start the auction");
         }
 
+        room.StartingCash = startingCash;
         room.AuctionActive = true;
         room.TimeRemaining = duration;
         room.TimerPaused = false;
         room.CurrentBid = 100000;
         room.HighestBidder = "";
 
+        RecalculatePlayerStats(room);
+        await Clients.Group(roomId).SendAsync("PlayersUpdated", room.Players);
         await Clients.Group(roomId).SendAsync("AuctionStarted", room.CurrentItemIndex, duration);
 
         StartBackgroundTimer(roomId, _hubContext);
@@ -276,7 +280,10 @@ public class PlayGroundHub : Hub
                             currentItem.Winner = room.HighestBidder;
                             currentItem.WinningBid = room.CurrentBid;
 
+                            RecalculatePlayerStats(room);
+
                             await hubContext.Clients.Group(roomId).SendAsync("ItemSold", room.HighestBidder, room.CurrentBid, currentItem.Name);
+                            await hubContext.Clients.Group(roomId).SendAsync("PlayersUpdated", room.Players);
                         }
                         break;
                     }
@@ -291,5 +298,36 @@ public class PlayGroundHub : Hub
                 Console.WriteLine($"Error in SignalR background timer: {ex.Message}");
             }
         }, token);
+    }
+
+    private static void RecalculatePlayerStats(Room room)
+    {
+        foreach (var player in room.Players)
+        {
+            if (player.IsHost)
+            {
+                player.Cash = 0;
+                player.PortfolioValue = 0;
+                player.TotalScore = 0;
+                continue;
+            }
+
+            string username = player.Email.Split('@')[0];
+            int portfolioValue = 0;
+            int totalSpent = 0;
+
+            foreach (var item in room.Items)
+            {
+                if (item.IsSold && item.Winner == username)
+                {
+                    portfolioValue += item.Value;
+                    totalSpent += item.WinningBid;
+                }
+            }
+
+            player.PortfolioValue = portfolioValue;
+            player.Cash = room.StartingCash - totalSpent;
+            player.TotalScore = player.Cash + player.PortfolioValue;
+        }
     }
 }

@@ -9,6 +9,9 @@ interface Player {
   email: string;
   connectionId: string;
   isHost: boolean;
+  cash?: number;
+  portfolioValue?: number;
+  totalScore?: number;
 }
 
 interface AuctionItem {
@@ -200,7 +203,7 @@ export default function PlaygroundPage() {
   // Start Auction
   const handleStartAuction = async () => {
     try {
-      await connection.invoke("StartAuction", roomId, auctionDuration);
+      await connection.invoke("StartAuction", roomId, auctionDuration, startingCash);
     } catch (err) {
       console.error("Hub StartAuction failed:", err);
     }
@@ -292,25 +295,9 @@ export default function PlaygroundPage() {
     }
   };
 
-  // Calculate scores for leaderboard
-  const getPlayerPortfolioValue = (email: string) => {
-    return items
-      .filter((i) => i.winner === email && i.isSold)
-      .reduce((sum, item) => sum + item.value, 0);
-  };
-
-  const getPlayerCash = (email: string) => {
-    const totalSpent = items
-      .filter((i) => i.winner === email && i.isSold)
-      .reduce((sum, item) => sum + (item.winningBid || 0), 0);
-    return startingCash - totalSpent;
-  };
-
-  // Setup list for endgame ranking
+  // Setup list for endgame ranking (server-calculated)
   const sortedLeaderboard = [...players].sort((a, b) => {
-    const scoreA = getPlayerCash(a.email) + getPlayerPortfolioValue(a.email);
-    const scoreB = getPlayerCash(b.email) + getPlayerPortfolioValue(b.email);
-    return scoreB - scoreA;
+    return (b.totalScore ?? 0) - (a.totalScore ?? 0);
   });
 
   return (
@@ -609,7 +596,7 @@ export default function PlaygroundPage() {
                         <div className="live-player-wallet-row">
                           <span className="live-player-wallet-label">Cash Remaining:</span>
                           <span className="live-player-wallet-value">
-                            ${getPlayerCash(session?.user?.email || '').toLocaleString()}
+                            ${(players.find(p => p.email === session?.user?.email)?.cash ?? startingCash).toLocaleString()}
                           </span>
                         </div>
 
@@ -673,17 +660,17 @@ export default function PlaygroundPage() {
                         <div className="live-inventory-card">
                           <span className="live-inventory-card-label">Cash Remaining</span>
                           <div className="live-inventory-card-value">
-                            ${getPlayerCash(session?.user?.email || '').toLocaleString()}
+                            ${(players.find(p => p.email === session?.user?.email)?.cash ?? startingCash).toLocaleString()}
                           </div>
                         </div>
                         <div className="live-inventory-card">
                           <span className="live-inventory-card-label">Collectibles Portfolio</span>
                           <div className="live-inventory-portfolio-items">
-                            {items.filter(i => i.winner === session?.user?.email && i.isSold).length === 0 ? (
+                            {items.filter(i => i.winner === (session?.user?.email?.split('@')[0] ?? '') && i.isSold).length === 0 ? (
                               <span className="live-inventory-portfolio-empty">No items won yet</span>
                             ) : (
                               <div className="live-inventory-portfolio-icons">
-                                {items.filter(i => i.winner === session?.user?.email && i.isSold).map((item) => (
+                                {items.filter(i => i.winner === (session?.user?.email?.split('@')[0] ?? '') && i.isSold).map((item) => (
                                   <span key={item.id} title={item.name}>{item.icon}</span>
                                 ))}
                               </div>
@@ -720,9 +707,9 @@ export default function PlaygroundPage() {
                     </thead>
                     <tbody>
                       {sortedLeaderboard.map((p, idx) => {
-                        const portfolioVal = getPlayerPortfolioValue(p.email);
-                        const cashVal = getPlayerCash(p.email);
-                        const score = cashVal + portfolioVal;
+                        const portfolioVal = p.portfolioValue ?? 0;
+                        const cashVal = p.cash ?? startingCash;
+                        const score = p.totalScore ?? cashVal;
                         return (
                           <tr key={p.connectionId || idx} className={`leaderboard-row ${idx === 0 ? 'gold-rank' : ''}`}>
                             <td className="font-weight-bold">{idx + 1}</td>
@@ -768,28 +755,28 @@ export default function PlaygroundPage() {
                       <div className="endgame-stats-row">
                         <span className="endgame-stats-label">Cash Remaining:</span>
                         <span className="endgame-stats-value">
-                          ${getPlayerCash(sortedLeaderboard[0]?.email || '').toLocaleString()}
+                          ${(sortedLeaderboard[0]?.cash ?? startingCash).toLocaleString()}
                         </span>
                       </div>
                       
                       <div className="endgame-stats-row">
                         <span className="endgame-stats-label">Portfolio Total:</span>
                         <span className="endgame-stats-value text-secondary">
-                          ${getPlayerPortfolioValue(sortedLeaderboard[0]?.email || '').toLocaleString()}
+                          ${(sortedLeaderboard[0]?.portfolioValue ?? 0).toLocaleString()}
                         </span>
                       </div>
 
                       {/* Portfolio break-down list */}
                       <div className="endgame-portfolio-sublist">
                         {items
-                          .filter((i) => i.winner === sortedLeaderboard[0]?.email && i.isSold)
+                          .filter((i) => i.winner === (sortedLeaderboard[0]?.email?.split('@')[0] ?? '') && i.isSold)
                           .map((item) => (
                             <div key={item.id} className="endgame-portfolio-row">
                               <span>{item.name}:</span>
                               <span>${(item.winningBid || 0).toLocaleString()}</span>
                             </div>
                           ))}
-                        {items.filter((i) => i.winner === sortedLeaderboard[0]?.email && i.isSold).length === 0 && (
+                        {items.filter((i) => i.winner === (sortedLeaderboard[0]?.email?.split('@')[0] ?? '') && i.isSold).length === 0 && (
                           <span className="endgame-portfolio-empty">No items won</span>
                         )}
                       </div>
@@ -804,7 +791,7 @@ export default function PlaygroundPage() {
                       <div className="endgame-total-score-row">
                         <span className="endgame-total-score-label">Final Score:</span>
                         <span className="endgame-total-score-val">
-                          ${(getPlayerCash(sortedLeaderboard[0]?.email || '') + getPlayerPortfolioValue(sortedLeaderboard[0]?.email || '')).toLocaleString()}
+                          ${(sortedLeaderboard[0]?.totalScore ?? 0).toLocaleString()}
                         </span>
                       </div>
                     </div>
