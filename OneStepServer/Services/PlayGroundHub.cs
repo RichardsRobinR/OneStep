@@ -40,6 +40,42 @@ public class PlayGroundHub : Hub
         room.Items.Add(new AuctionItemState { Id = "3", Name = "AI Assistant", Icon = "🤖", Category = "Tech", Value = 800000 });
         room.Items.Add(new AuctionItemState { Id = "4", Name = "Meeting Pass", Icon = "🎫", Category = "Utility", Value = 200000 });
 
+        room.Items.Add(new AuctionItemState { Id = "5", Name = "Gaming Laptop", Icon = "💻", Category = "Tech", Value = 950000 });
+        room.Items.Add(new AuctionItemState { Id = "6", Name = "Smart Watch", Icon = "⌚", Category = "Tech", Value = 450000 });
+        room.Items.Add(new AuctionItemState { Id = "7", Name = "Noise Cancelling Headphones", Icon = "🎧", Category = "Tech", Value = 550000 });
+        room.Items.Add(new AuctionItemState { Id = "8", Name = "4-Day Work Week", Icon = "📅", Category = "Lifestyle", Value = 1200000 });
+        room.Items.Add(new AuctionItemState { Id = "9", Name = "VIP Parking Spot", Icon = "🅿", Category = "Utility", Value = 350000 });
+        room.Items.Add(new AuctionItemState { Id = "10", Name = "Private Office", Icon = "🏢", Category = "Productivity", Value = 1000000 });
+
+        room.Items.Add(new AuctionItemState { Id = "11", Name = "Unlimited Snacks", Icon = "🍪", Category = "Lifestyle", Value = 400000 });
+        room.Items.Add(new AuctionItemState { Id = "12", Name = "Ergonomic Chair", Icon = "🪑", Category = "Productivity", Value = 600000 });
+        room.Items.Add(new AuctionItemState { Id = "13", Name = "Cloud Server Credits", Icon = "☁️", Category = "Tech", Value = 750000 });
+        room.Items.Add(new AuctionItemState { Id = "14", Name = "Hackathon Ticket", Icon = "🎮", Category = "Tech", Value = 250000 });
+        room.Items.Add(new AuctionItemState { Id = "15", Name = "Lunch With CEO", Icon = "🍽", Category = "Lifestyle", Value = 850000 });
+
+        room.Items.Add(new AuctionItemState { Id = "16", Name = "Mystery Box", Icon = "📦", Category = "Special", Value = 500000 });
+        room.Items.Add(new AuctionItemState { Id = "17", Name = "Standing Desk", Icon = "🖥", Category = "Productivity", Value = 650000 });
+        room.Items.Add(new AuctionItemState { Id = "18", Name = "Team Outing", Icon = "🎉", Category = "Lifestyle", Value = 700000 });
+        room.Items.Add(new AuctionItemState { Id = "19", Name = "Premium Keyboard", Icon = "⌨️", Category = "Tech", Value = 300000 });
+        room.Items.Add(new AuctionItemState { Id = "20", Name = "UltraWide Monitor", Icon = "🖥️", Category = "Tech", Value = 720000 });
+
+        room.Items.Add(new AuctionItemState { Id = "21", Name = "Free Uber Rides", Icon = "🚕", Category = "Lifestyle", Value = 500000 });
+        room.Items.Add(new AuctionItemState { Id = "22", Name = "Crypto Wallet", Icon = "💰", Category = "Finance", Value = 650000 });
+        room.Items.Add(new AuctionItemState { Id = "23", Name = "Golden Badge", Icon = "🥇", Category = "Special", Value = 900000 });
+        room.Items.Add(new AuctionItemState { Id = "24", Name = "Extra Break Time", Icon = "⏳", Category = "Utility", Value = 180000 });
+        room.Items.Add(new AuctionItemState { Id = "25", Name = "Streaming Subscription", Icon = "📺", Category = "Entertainment", Value = 220000 });
+
+        room.Items.Add(new AuctionItemState { Id = "26", Name = "Drone Camera", Icon = "🚁", Category = "Tech", Value = 880000 });
+        room.Items.Add(new AuctionItemState { Id = "27", Name = "Fitness Membership", Icon = "🏋️", Category = "Health", Value = 430000 });
+        room.Items.Add(new AuctionItemState { Id = "28", Name = "VR Headset", Icon = "🥽", Category = "Tech", Value = 980000 });
+        room.Items.Add(new AuctionItemState { Id = "29", Name = "Weekend Getaway", Icon = "✈️", Category = "Lifestyle", Value = 1100000 });
+        room.Items.Add(new AuctionItemState { Id = "30", Name = "Custom PC Setup", Icon = "🖥️", Category = "Tech", Value = 1500000 });
+
+        room.Items.Add(new AuctionItemState { Id = "31", Name = "Office Pet Day", Icon = "🐶", Category = "Lifestyle", Value = 260000 });
+        room.Items.Add(new AuctionItemState { Id = "32", Name = "Priority Support Pass", Icon = "⚡", Category = "Utility", Value = 370000 });
+        room.Items.Add(new AuctionItemState { Id = "33", Name = "Startup Investment Token", Icon = "📈", Category = "Finance", Value = 1300000 });
+        room.Items.Add(new AuctionItemState { Id = "34", Name = "Portable Projector", Icon = "📽", Category = "Tech", Value = 480000 });
+
         Rooms.TryAdd(roomId, room);
 
         return roomId;
@@ -201,6 +237,10 @@ public class PlayGroundHub : Hub
             if (amount <= room.CurrentBid)
             {
                 throw new HubException("Bidding amount must exceed the current active bid");
+            }
+            if (amount > player.Cash)
+            {
+                throw new HubException("Bidding amount exceeds your remaining cash balance");
             }
 
             room.CurrentBid = amount;

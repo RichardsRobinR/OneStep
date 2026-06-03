@@ -261,9 +261,17 @@ export default function PlaygroundPage() {
   // Place Bid
   const handlePlaceBid = async (amount: number) => {
     if (amount <= currentBid) return;
+    
+    const playerCash = players.find(p => p.email === session?.user?.email)?.cash ?? startingCash;
+    if (amount > playerCash) {
+      alert("Bidding amount exceeds your remaining cash balance!");
+      return;
+    }
+
     try {
       await connection.invoke("PlaceBid", roomId, amount);
-    } catch (err) {
+    } catch (err: unknown) {
+      alert((err as Error)?.message || "Failed to place bid");
       console.error("Hub PlaceBid failed:", err);
     }
   };
@@ -776,20 +784,13 @@ export default function PlaygroundPage() {
                           .filter((i) => i.winner === (sortedLeaderboard[0]?.email?.split('@')[0] ?? '') && i.isSold)
                           .map((item) => (
                             <div key={item.id} className="endgame-portfolio-row">
-                              <span>{item.name}:</span>
-                              <span>₹{(item.winningBid || 0).toLocaleString()}</span>
+                              <span>{item.name} (Value: ₹{item.value.toLocaleString()}):</span>
+                              <span>Bid: ₹{(item.winningBid || 0).toLocaleString()}</span>
                             </div>
                           ))}
                         {items.filter((i) => i.winner === (sortedLeaderboard[0]?.email?.split('@')[0] ?? '') && i.isSold).length === 0 && (
                           <span className="endgame-portfolio-empty">No items won</span>
                         )}
-                      </div>
-
-                      <div className="endgame-stats-row">
-                        <span className="endgame-stats-label">Bonus Points:</span>
-                        <span className="endgame-stats-value text-amber">
-                          +0
-                        </span>
                       </div>
 
                       <div className="endgame-total-score-row">
